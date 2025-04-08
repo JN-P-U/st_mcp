@@ -4,6 +4,7 @@ import sys
 from typing import Any, Dict, List, Optional
 
 from aiohttp import web
+from fastapi import FastAPI
 from jsonrpcserver import async_dispatch as dispatch
 from jsonrpcserver import method
 
@@ -161,8 +162,40 @@ async def handle(request):
         )
 
 
-app = web.Application()
-app.router.add_post("/", handle)
+# aiohttp 앱
+aiohttp_app = web.Application()
+aiohttp_app.router.add_post("/", handle)
+
+# FastAPI 앱 (Smithery.ai용)
+app = FastAPI(title="MCP Stock Analysis API")
+
+
+@app.get("/")
+async def root():
+    return {"status": "ready", "service": "MCP Stock Analysis"}
+
+
+@app.post("/jsonrpc")
+async def jsonrpc(request: dict):
+    """JSON-RPC 요청을 처리하는 엔드포인트"""
+    try:
+        method_name = request.get("method")
+        params = request.get("params", {})
+
+        if method_name == "initialize":
+            return await initialize()
+        elif method_name == "tools_list":
+            return await tools_list()
+        elif method_name == "analyze_stock":
+            stock_code = params.get("stock_code")
+            if not stock_code:
+                return {"error": "stock_code is required"}
+            return await analyze_stock(stock_code)
+        else:
+            return {"error": f"Unknown method: {method_name}"}
+    except Exception as e:
+        logger.error(f"JSON-RPC 처리 중 오류 발생: {e}")
+        return {"error": str(e)}
 
 
 # 로컬에서 실행할 때 사용할 클라이언트 함수
@@ -184,4 +217,4 @@ if __name__ == "__main__":
     logger.info("사용 예시:")
     logger.info("  result = call_local_api('analyze_stock', {'stock_code': '005930'})")
     logger.info("  print(result)")
-    web.run_app(app, host="0.0.0.0", port=8000)
+    web.run_app(aiohttp_app, host="0.0.0.0", port=8000)

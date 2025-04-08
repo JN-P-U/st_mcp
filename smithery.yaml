@@ -2,11 +2,4 @@ version: 1
 name: st_mcp
 description: 주식 분석 AI 서비스
 runtime: python3.11
-dependencies:
-  - aiohttp==3.9.3
-  - jsonrpcserver==5.0.9
-  - pandas==2.2.0
-  - yfinance==0.2.36
-  - python-dotenv==1.0.1
-  - matplotlib==3.8.2
 entry_point: api:app 

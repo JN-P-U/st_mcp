@@ -21,4 +21,4 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED=1
 
 # 서버 실행
-CMD ["python", "-u", "api.py"] 
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"] 
