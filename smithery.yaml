@@ -2,4 +2,34 @@ version: 1
 name: st_mcp
 description: "주식 분석 AI 서비스"
 runtime: python3.11
-entry_point: "api:app" 
+entry_point: "api:app"
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      api_key:
+        type: string
+        description: "MCP API Key"
+      api_url:
+        type: string
+        description: "MCP API URL"
+        default: "https://api.mcp.example.com"
+    required: ["api_key"]
+  commandFunction: |
+    function(config) {
+      return {
+        command: ["uvicorn"],
+        args: ["api:app", "--host", "0.0.0.0", "--port", "8000"],
+        env: {
+          "MCP_API_KEY": config.api_key,
+          "MCP_API_URL": config.api_url,
+          "PYTHONUNBUFFERED": "1"
+        }
+      };
+    }
+
+build:
+  dockerfile: Dockerfile
+  dockerBuildPath: . 
