@@ -2,4 +2,7 @@ version: 1
 name: st_mcp
 description: 주식 분석 AI 서비스
 runtime: python3.11
-entry_point: api:app 
+entry_point: api:app
+build:
+  dockerfile: Dockerfile
+  context: . 

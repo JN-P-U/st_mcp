@@ -3,10 +3,8 @@ import logging
 import sys
 from typing import Any, Dict, List, Optional
 
-from aiohttp import web
-from fastapi import FastAPI
-from jsonrpcserver import async_dispatch as dispatch
-from jsonrpcserver import method
+from fastapi import FastAPI, Request
+from pydantic import BaseModel
 
 # 로깅 설정
 logging.basicConfig(
@@ -42,7 +40,57 @@ def get_analyzer() -> MCPStockAnalyzer:
     return analyzer
 
 
-@method
+# FastAPI 앱 (Smithery.ai용)
+app = FastAPI(title="MCP Stock Analysis API")
+
+
+class JsonRpcRequest(BaseModel):
+    jsonrpc: str = "2.0"
+    method: str
+    params: Optional[Dict[str, Any]] = None
+    id: Optional[Any] = None
+
+
+@app.get("/")
+async def root():
+    return {"status": "ready", "service": "MCP Stock Analysis"}
+
+
+@app.post("/jsonrpc")
+async def jsonrpc(request: JsonRpcRequest):
+    """JSON-RPC 요청을 처리하는 엔드포인트"""
+    try:
+        method_name = request.method
+        params = request.params or {}
+
+        logger.info(f"JSON-RPC 요청 수신: method={method_name}, params={params}")
+
+        if method_name == "initialize":
+            result = await initialize()
+        elif method_name == "tools_list":
+            result = await tools_list()
+        elif method_name == "analyze_stock":
+            stock_code = params.get("stock_code")
+            if not stock_code:
+                return {
+                    "jsonrpc": "2.0",
+                    "error": {"message": "stock_code is required"},
+                    "id": request.id,
+                }
+            result = await analyze_stock(stock_code)
+        else:
+            return {
+                "jsonrpc": "2.0",
+                "error": {"message": f"Unknown method: {method_name}"},
+                "id": request.id,
+            }
+
+        return {"jsonrpc": "2.0", "result": result, "id": request.id}
+    except Exception as e:
+        logger.error(f"JSON-RPC 처리 중 오류 발생: {e}")
+        return {"jsonrpc": "2.0", "error": {"message": str(e)}, "id": request.id}
+
+
 async def initialize() -> Dict[str, Any]:
     """Smithery.ai 서버 초기화 메서드"""
     logger.info("initialize 메서드 호출됨")
@@ -90,7 +138,6 @@ async def initialize() -> Dict[str, Any]:
     }
 
 
-@method
 async def tools_list() -> Dict[str, List[Dict[str, Any]]]:
     """Smithery.ai에서 요구하는 도구 목록을 반환합니다"""
     logger.info("tools_list 메서드 호출됨")
@@ -128,7 +175,6 @@ async def tools_list() -> Dict[str, List[Dict[str, Any]]]:
     }
 
 
-@method
 async def analyze_stock(stock_code: str) -> Dict[str, Any]:
     """주식 분석을 수행하는 메서드"""
     logger.info(f"analyze_stock 메서드 호출됨: stock_code={stock_code}")
@@ -143,61 +189,6 @@ async def analyze_stock(stock_code: str) -> Dict[str, Any]:
         return {"error": str(e)}
 
 
-async def handle(request):
-    """JSON-RPC 요청을 처리하는 핸들러"""
-    try:
-        request_text = await request.text()
-        logger.info(f"요청 수신: {request_text[:100]}...")
-        response = await dispatch(request_text)
-        logger.info(f"응답 전송: {str(response)[:100]}...")
-        return web.Response(text=str(response), content_type="application/json")
-    except Exception as e:
-        logger.error(f"요청 처리 중 오류 발생: {e}")
-        return web.Response(
-            text=json.dumps(
-                {"jsonrpc": "2.0", "error": {"message": str(e)}, "id": None}
-            ),
-            content_type="application/json",
-            status=500,
-        )
-
-
-# aiohttp 앱
-aiohttp_app = web.Application()
-aiohttp_app.router.add_post("/", handle)
-
-# FastAPI 앱 (Smithery.ai용)
-app = FastAPI(title="MCP Stock Analysis API")
-
-
-@app.get("/")
-async def root():
-    return {"status": "ready", "service": "MCP Stock Analysis"}
-
-
-@app.post("/jsonrpc")
-async def jsonrpc(request: dict):
-    """JSON-RPC 요청을 처리하는 엔드포인트"""
-    try:
-        method_name = request.get("method")
-        params = request.get("params", {})
-
-        if method_name == "initialize":
-            return await initialize()
-        elif method_name == "tools_list":
-            return await tools_list()
-        elif method_name == "analyze_stock":
-            stock_code = params.get("stock_code")
-            if not stock_code:
-                return {"error": "stock_code is required"}
-            return await analyze_stock(stock_code)
-        else:
-            return {"error": f"Unknown method: {method_name}"}
-    except Exception as e:
-        logger.error(f"JSON-RPC 처리 중 오류 발생: {e}")
-        return {"error": str(e)}
-
-
 # 로컬에서 실행할 때 사용할 클라이언트 함수
 def call_local_api(
     method: str, params: Optional[Dict[str, Any]] = None
@@ -206,15 +197,18 @@ def call_local_api(
     import requests
 
     response = requests.post(
-        "http://localhost:8000/",
+        "http://localhost:8000/jsonrpc",
         json={"jsonrpc": "2.0", "method": method, "params": params or {}, "id": 1},
     )
     return response.json()
 
 
 if __name__ == "__main__":
+    import uvicorn
+
     logger.info("주식 분석 API 서버가 시작되었습니다.")
     logger.info("사용 예시:")
     logger.info("  result = call_local_api('analyze_stock', {'stock_code': '005930'})")
     logger.info("  print(result)")
-    web.run_app(aiohttp_app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
