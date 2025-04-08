@@ -17,5 +17,8 @@ COPY . .
 # 서비스 포트 설정
 EXPOSE 8000
 
+# 환경 변수 설정
+ENV PYTHONUNBUFFERED=1
+
 # 서버 실행
-CMD ["python", "api.py"] 
+CMD ["python", "-u", "api.py"] 
