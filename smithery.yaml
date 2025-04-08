@@ -8,23 +8,14 @@ startCommand:
   type: stdio
   configSchema:
     type: object
-    properties:
-      api_key:
-        type: string
-        description: "MCP API Key"
-      api_url:
-        type: string
-        description: "MCP API URL"
-        default: "https://api.mcp.example.com"
-    required: ["api_key"]
+    properties: {}
+    required: []
   commandFunction: |
     function(config) {
       return {
-        command: ["uvicorn"],
-        args: ["api:app", "--host", "0.0.0.0", "--port", "8000"],
+        command: ["python", "-u", "api.py"],
+        args: [],
         env: {
-          "MCP_API_KEY": config.api_key,
-          "MCP_API_URL": config.api_url,
           "PYTHONUNBUFFERED": "1"
         }
       };
