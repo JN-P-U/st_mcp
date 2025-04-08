@@ -1,20 +1,19 @@
 [tool.poetry]
-name = "st_mcp"
+name = "st-mcp"
 version = "0.1.0"
-description = "MCP 기반 주식 분석 시스템"
+description = "Stock Market Analysis Tool"
 authors = ["Your Name <your.email@example.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-openai = "^1.0.0"
-python-dotenv = "^1.0.0"
-requests = "^2.31.0"
+python = "^3.11"
 pandas = "^2.0.0"
 numpy = "^1.24.0"
-matplotlib = "^3.7.0"
-yfinance = "^0.2.0"
-mplcursors = "^0.5.0"
-mplfinance = "^0.12.10b0"
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+openai = "^1.0.0"
+fastapi = "^0.109.0"
+uvicorn = "^0.27.0"
+pydantic = "^2.6.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
