@@ -8,9 +8,6 @@ MCP 기반 주식 분석 시스템
 import logging
 import os
 import sys
-from typing import Any, Dict
-
-from dotenv import load_dotenv
 
 from st_mcp import analyze_stock
 
@@ -21,8 +18,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# 환경 변수 로드
-load_dotenv()
+# 환경 변수 확인
+required_env_vars = ["OPENAI_API_KEY", "MCP_API_KEY", "MCP_API_URL", "MCP_STORAGE_PATH"]
+missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+if missing_vars:
+    logger.error(f"필수 환경 변수가 설정되지 않았습니다: {', '.join(missing_vars)}")
+    sys.exit(1)
 
 
 def main():
