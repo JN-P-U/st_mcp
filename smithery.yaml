@@ -1,15 +1,4 @@
 version: 1.0
 build:
   dockerfile: Dockerfile
-  context: .
-  args:
-    - OPENAI_API_KEY=${OPENAI_API_KEY}
-    - MCP_API_KEY=${MCP_API_KEY}
-    - MCP_API_URL=${MCP_API_URL}
-    - MCP_STORAGE_PATH=${MCP_STORAGE_PATH}
-deploy:
-  env:
-    - OPENAI_API_KEY=${OPENAI_API_KEY}
-    - MCP_API_KEY=${MCP_API_KEY}
-    - MCP_API_URL=${MCP_API_URL}
-    - MCP_STORAGE_PATH=${MCP_STORAGE_PATH} 
+  context: . 

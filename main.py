@@ -18,17 +18,38 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# 환경 변수 확인
-required_env_vars = ["OPENAI_API_KEY", "MCP_API_KEY", "MCP_API_URL", "MCP_STORAGE_PATH"]
-missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
-if missing_vars:
-    logger.error(f"필수 환경 변수가 설정되지 않았습니다: {', '.join(missing_vars)}")
-    sys.exit(1)
+
+def get_env_var(var_name, prompt=None):
+    """환경 변수를 가져오거나 사용자에게 입력을 요청합니다."""
+    value = os.environ.get(var_name)
+    if not value and prompt:
+        value = input(prompt)
+        # 입력받은 값을 환경 변수에 설정
+        os.environ[var_name] = value
+    return value
+
+
+def setup_environment():
+    """필요한 환경 변수를 설정합니다."""
+    # OpenAI API 키 설정
+    get_env_var("OPENAI_API_KEY", "OpenAI API 키를 입력하세요: ")
+
+    # MCP API 키 설정
+    get_env_var("MCP_API_KEY", "MCP API 키를 입력하세요: ")
+
+    # MCP API URL 설정 (기본값)
+    os.environ["MCP_API_URL"] = "https://server.smithery.ai/@JN-P-U/st_mcp"
+
+    # MCP 스토리지 경로 설정 (기본값)
+    os.environ["MCP_STORAGE_PATH"] = "/mcp/storage"
 
 
 def main():
     """메인 함수"""
     try:
+        # 환경 변수 설정
+        setup_environment()
+
         # 주식 코드 입력
         stock_code = input("분석할 주식 코드를 입력하세요: ")
 

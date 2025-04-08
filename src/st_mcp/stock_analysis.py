@@ -33,7 +33,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # MCP 환경 설정
 MCP_API_KEY = os.getenv("MCP_API_KEY")
-MCP_API_URL = os.getenv("MCP_API_URL", "https://api.mcp.example.com")
+MCP_API_URL = "https://server.smithery.ai/@JN-P-U/st_mcp"
 MCP_STORAGE_PATH = os.getenv("MCP_STORAGE_PATH", "/mcp/storage")
 
 # 한글 폰트 설정
