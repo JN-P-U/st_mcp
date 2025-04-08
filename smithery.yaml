@@ -28,8 +28,8 @@ startCommand:
   commandFunction: |
     function(config) {
       return {
-        command: "python",
-        args: ["main.py"],
+        command: "poetry",
+        args: ["run", "python", "main.py"],
         env: {
           OPENAI_API_KEY: config.openai_api_key,
           DART_API_KEY: config.dart_api_key,

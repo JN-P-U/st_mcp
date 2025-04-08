@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
 # Poetry 설치
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
+# Poetry PATH 설정
+ENV PATH="/root/.local/bin:$PATH"
+
 # 프로젝트 파일 복사
 COPY pyproject.toml poetry.lock ./
 COPY src/st_mcp ./st_mcp
@@ -28,5 +31,5 @@ RUN mkdir -p /mcp/storage /mcp/result
 # 폰트 캐시 업데이트
 RUN fc-cache -f -v
 
-# FastAPI 서버 실행
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# 실행
+CMD ["poetry", "run", "python", "main.py"] 

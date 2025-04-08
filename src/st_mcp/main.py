@@ -1,32 +1,38 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import json
+import sys
+
 from stock_integrated_analysis import analyze_stock
 
-app = FastAPI(title="Stock Analysis API")
 
-
-class AnalysisRequest(BaseModel):
-    stock_code: str
-    openai_api_key: str
-    dart_api_key: str
-    mcp_api_key: str
-
-
-@app.post("/analyze")
-async def analyze_stock_endpoint(request: AnalysisRequest):
+def main():
     try:
-        result = analyze_stock(
-            request.stock_code,
-            request.openai_api_key,
-            request.dart_api_key,
-            request.mcp_api_key,
-        )
-        return result
+        # STDIN에서 입력 읽기
+        input_data = json.loads(sys.stdin.read())
+
+        # API 키 설정
+        openai_api_key = input_data.get("openai_api_key")
+        dart_api_key = input_data.get("dart_api_key")
+        mcp_api_key = input_data.get("mcp_api_key")
+
+        # 종목 코드 가져오기
+        stock_code = input_data.get("stock_code")
+
+        if not all([openai_api_key, dart_api_key, mcp_api_key, stock_code]):
+            print(json.dumps({"error": "필수 파라미터가 누락되었습니다."}))
+            return
+
+        # 주식 분석 수행
+        result = analyze_stock(stock_code, openai_api_key, dart_api_key, mcp_api_key)
+
+        # 결과 출력
+        print(json.dumps(result, ensure_ascii=False))
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(json.dumps({"error": str(e)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    main()
