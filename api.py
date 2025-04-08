@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from aiohttp import web
 from jsonrpcserver import async_dispatch as dispatch
@@ -7,7 +7,16 @@ from jsonrpcserver import method
 
 from mcp_stock_analysis import MCPStockAnalyzer
 
-analyzer = MCPStockAnalyzer()
+# 전역 변수로 analyzer 선언
+analyzer: Optional[MCPStockAnalyzer] = None
+
+
+def get_analyzer() -> MCPStockAnalyzer:
+    """필요할 때만 analyzer를 초기화하여 반환합니다"""
+    global analyzer
+    if analyzer is None:
+        analyzer = MCPStockAnalyzer()
+    return analyzer
 
 
 @method
@@ -98,6 +107,8 @@ async def tools_list() -> Dict[str, List[Dict[str, Any]]]:
 async def analyze_stock(stock_code: str) -> Dict[str, Any]:
     """주식 분석을 수행하는 메서드"""
     try:
+        # 실제 분석이 필요할 때만 analyzer 초기화
+        analyzer = get_analyzer()
         result = analyzer.analyze_technical(stock_code)
         return result
     except Exception as e:
