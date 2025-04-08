@@ -1,4 +1,50 @@
 version: 1.0
+name: st_mcp
+description: MCP 기반 주식 분석 시스템
+type: mcp
+
 build:
   dockerfile: Dockerfile
-  context: . 
+  context: .
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      openai_api_key:
+        type: string
+        description: OpenAI API 키
+      dart_api_key:
+        type: string
+        description: DART API 키
+      mcp_api_key:
+        type: string
+        description: MCP API 키
+    required:
+      - openai_api_key
+      - dart_api_key
+      - mcp_api_key
+  commandFunction: |
+    function(config) {
+      return {
+        command: "python",
+        args: ["main.py"],
+        env: {
+          OPENAI_API_KEY: config.openai_api_key,
+          DART_API_KEY: config.dart_api_key,
+          MCP_API_KEY: config.mcp_api_key
+        }
+      };
+    }
+
+ports:
+  - 8000:8000
+
+volumes:
+  - /mcp/storage:/mcp/storage
+
+resources:
+  cpu: 1
+  memory: 2Gi
+  storage: 10Gi 

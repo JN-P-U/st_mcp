@@ -1,3 +1,3 @@
-from analysis_stock_mcp.stock_analysis import analyze_stock
+from .stock_integrated_analysis import analyze_stock, main
 
-__all__ = ["analyze_stock"]
+__all__ = ["analyze_stock", "main"]
