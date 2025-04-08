@@ -1,69 +1,71 @@
-import os
+import json
 from typing import Any, Dict, List
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from aiohttp import web
+from jsonrpcserver import async_dispatch as dispatch
+from jsonrpcserver import method
 
 from mcp_stock_analysis import MCPStockAnalyzer
 
-app = FastAPI(title="MCP Stock Analysis API")
 analyzer = MCPStockAnalyzer()
 
 
-class StockAnalysisRequest(BaseModel):
-    stock_code: str
-
-
-class Tool(BaseModel):
-    name: str
-    description: str
-    parameters: Dict[str, Any]
-
-
-@app.get("/")
-async def root():
-    return {"status": "ready", "service": "MCP Stock Analysis"}
-
-
-@app.get("/tools/list")
-async def list_tools() -> Dict[str, List[Tool]]:
-    tools = [
-        Tool(
-            name="analyze_stock",
-            description="주식 종합 분석을 수행합니다",
-            parameters={
-                "type": "object",
-                "properties": {
-                    "stock_code": {
-                        "type": "string",
-                        "description": "분석할 주식 종목 코드 (예: 005930)",
-                    }
+@method
+async def tools_list() -> Dict[str, List[Dict[str, Any]]]:
+    """Smithery.ai에서 요구하는 도구 목록을 반환합니다"""
+    return {
+        "tools": [
+            {
+                "name": "analyze_stock",
+                "description": "주식 종합 분석을 수행합니다",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "stock_code": {
+                            "type": "string",
+                            "description": "분석할 주식 종목 코드 (예: 005930)",
+                        }
+                    },
+                    "required": ["stock_code"],
                 },
-                "required": ["stock_code"],
             },
-        ),
-        Tool(
-            name="analyze_technical",
-            description="주식의 기술적 분석을 수행합니다",
-            parameters={
-                "type": "object",
-                "properties": {
-                    "stock_code": {
-                        "type": "string",
-                        "description": "분석할 주식 종목 코드 (예: 005930)",
-                    }
+            {
+                "name": "analyze_technical",
+                "description": "주식의 기술적 분석을 수행합니다",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "stock_code": {
+                            "type": "string",
+                            "description": "분석할 주식 종목 코드 (예: 005930)",
+                        }
+                    },
+                    "required": ["stock_code"],
                 },
-                "required": ["stock_code"],
             },
-        ),
-    ]
-    return {"tools": tools}
+        ]
+    }
 
 
-@app.post("/analyze")
-async def analyze_stock(request: StockAnalysisRequest) -> Dict[str, Any]:
+@method
+async def analyze_stock(stock_code: str) -> Dict[str, Any]:
+    """주식 분석을 수행하는 메서드"""
     try:
-        result = analyzer.analyze_technical(request.stock_code)
+        result = analyzer.analyze_technical(stock_code)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
+
+
+async def handle(request):
+    """JSON-RPC 요청을 처리하는 핸들러"""
+    request_text = await request.text()
+    response = await dispatch(request_text)
+    return web.Response(text=str(response), content_type="application/json")
+
+
+app = web.Application()
+app.router.add_post("/", handle)
+
+if __name__ == "__main__":
+    web.run_app(app, port=8000)
